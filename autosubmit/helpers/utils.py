@@ -106,9 +106,8 @@ def restore_platforms(platform_to_test, mail_notify=False, as_conf=None, expid=N
     Log.info("Checking the connection to all platforms in use")
     issues = ""
     ssh_config_issues = ""
-    private_key_error = ("Please, add your private key to the ssh-agent ( ssh-add <path_to_key> )"
-                         " or use a non-encrypted key\nIf ssh agent is not initialized, prompt "
-                         "first eval `ssh-agent -s`")
+    private_key_error = ("Please, add your private key to the ssh-agent ( ssh-add <path_to_key> ) or use "
+                         "a non-encrypted key\nIf ssh agent is not initialized, prompt first eval `ssh-agent -s`")
     for platform in platform_to_test:
         platform_issues = ""
         try:
@@ -128,8 +127,8 @@ def restore_platforms(platform_to_test, mail_notify=False, as_conf=None, expid=N
                     ssh_config_issues += message + ".Please, the eccert expiration date"
                 else:
                     ssh_config_issues += message + (" this is an PARAMIKO SSHEXCEPTION: indicates that there is "
-                                                    f"something incompatible in the ssh_config for host:{platform.host}\n maybe "
-                                                    "you need to contact your sysadmin")
+                                                    f"something incompatible in the ssh_config for host:{platform.host}"
+                                                    "\nmaybe you need to contact your sysadmin")
         except Exception as e:
             with suppress(Exception):
                 if mail_notify:
