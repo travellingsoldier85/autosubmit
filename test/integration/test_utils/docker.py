@@ -20,7 +20,6 @@ from getpass import getuser
 from os import environ
 from pathlib import Path
 from pwd import getpwnam
-from textwrap import dedent
 from time import sleep, time
 from typing import TYPE_CHECKING
 
@@ -54,7 +53,7 @@ _SSH_DOCKER_IMAGE_X11_MFA = 'autosubmit/linuxserverio-ssh-2fa-x11:latest'
 _SSH_DOCKER_PASSWORD = 'password'
 """Common password used in SSH containers; we mock the SSH Client of Paramiko to avoid hassle with keys."""
 
-_SLURM_DOCKER_IMAGE = 'autosubmit/slurm-openssh-container:25-05-0-1'
+_SLURM_DOCKER_IMAGE = 'giovtorres/slurm-docker:25.11.2-v0.1.5'
 """The Slurm Docker image. About 600 MB. It contains 2 cores, 1 node."""
 
 _GIT_DOCKER_IMAGE = 'githttpd/githttpd:latest'
@@ -131,36 +130,37 @@ def get_git_container(git_repos_path: Path) -> tuple['DockerContainer', int]:
 def prepare_and_test_slurm_container(
         container: 'DockerContainer', ssh_port: int, ssh_path: Path, mocker: 'MockerFixture') -> None:
     # TODO: or maybe wait for 'debug:  sched: Running job scheduler for full queue.'?
-    wait_for_logs(container, lambda logs: 'No fed_mgr state file' in logs)
+    wait_for_logs(container, lambda logs: 'Running job scheduler for default depth' in logs)
 
     container.exec('sinfo')
+    container.exec('mkdir -p /tmp/scratch/group/root')
 
-    sshd_config_text = dedent('''\
-        Include /etc/ssh/sshd_config.d/*.conf
-
-        PasswordAuthentication yes
-        KbdInteractiveAuthentication no
-        UsePAM yes
-        X11Forwarding yes
-        PrintMotd no
-        AcceptEnv LANG LC_* COLORTERM NO_COLOR
-        Subsystem	sftp	/usr/lib/openssh/sftp-server
-        Port 2222
-        PermitRootLogin yes
-        # MaxStartups 10:0:10
-        LoginGraceTime 120
-        UseDNS no
-        ''')
-    sshd_config = Path(ssh_path, 'slurm_sshd_config')
-    sshd_config.parent.mkdir(parents=True, exist_ok=True)
-    sshd_config.touch()
-    sshd_config.write_text(sshd_config_text)
-    container.exec([
-        "sh", "-c",
-        "cat <<'EOF' > /etc/ssh/sshd_config\n"
-        f"{sshd_config_text}\n"
-        "EOF"
-    ])
+    # sshd_config_text = dedent('''\
+    #     Include /etc/ssh/sshd_config.d/*.conf
+    #
+    #     PasswordAuthentication yes
+    #     KbdInteractiveAuthentication no
+    #     UsePAM yes
+    #     X11Forwarding yes
+    #     PrintMotd no
+    #     AcceptEnv LANG LC_* COLORTERM NO_COLOR
+    #     Subsystem	sftp	/usr/lib/openssh/sftp-server
+    #     Port 2222
+    #     PermitRootLogin yes
+    #     # MaxStartups 10:0:10
+    #     LoginGraceTime 120
+    #     UseDNS no
+    #     ''')
+    # sshd_config = Path(ssh_path, 'slurm_sshd_config')
+    # sshd_config.parent.mkdir(parents=True, exist_ok=True)
+    # sshd_config.touch()
+    # sshd_config.write_text(sshd_config_text)
+    # container.exec([
+    #     "sh", "-c",
+    #     "cat <<'EOF' > /etc/ssh/sshd_config\n"
+    #     f"{sshd_config_text}\n"
+    #     "EOF"
+    # ])
 
     priv, pubkey, ssh_config = create_ssh_keypair_and_config(ssh_port, ssh_path, 'config_slurm')
 
@@ -204,6 +204,7 @@ def _create_slurm_container(ssh_port: int) -> DockerContainer:
     docker_args = {
         'cgroupns': 'host',
         'privileged': True,
+        'init': True,
         'labels': {
             _AS_SLURM_CONTAINER_LABEL: 'true',
         }
@@ -212,7 +213,7 @@ def _create_slurm_container(ssh_port: int) -> DockerContainer:
     docker_container = DockerContainer(
         image=_SLURM_DOCKER_IMAGE,
         remove=True,
-        hostname='slurmctld',
+        hostname='slurmctl',
         **docker_args
     )
 
@@ -222,6 +223,13 @@ def _create_slurm_container(ssh_port: int) -> DockerContainer:
 
     container = docker_container \
         .with_env('TZ', 'Etc/UTC') \
+        .with_env('MYSQL_USER', 'autosubmit') \
+        .with_env('MYSQL_PASSWORD', 'autosubmit') \
+        .with_env('ROOT_PASSWORD', 'autosubmit') \
+        .with_env('SSH_PORT', '2222') \
+        .with_env('SSH_PERMIT_ROOT_LOGIN', 'yes') \
+        .with_env('SSH_PASSWORD_AUTH', 'yes') \
+        .with_env('EXTRA_PACKAGES', 'xz') \
         .with_bind_ports(2222, ssh_port)
 
     return container

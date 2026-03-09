@@ -127,6 +127,7 @@ def _generate_ssh_keypair(path: Path):
                                              format=serialization.PrivateFormat.OpenSSH,
                                              encryption_algorithm=serialization.NoEncryption())
     # print(private_key.decode())
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.touch()
     path.write_text(private_key.decode('utf-8'))
     path.chmod(0o600)
