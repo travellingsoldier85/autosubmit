@@ -2004,8 +2004,6 @@ class Job(object):
         :return: None
         """
         # Calendar struct type numbered ( year, month, day, hour )
-
-        job_data = as_conf.jobs_data.get(self.section, {})
         if self.splits and self.running != "once":  # once jobs has no date
             if int(self.split) == 1:
                 parameters['SPLIT_FIRST'] = 'TRUE'
