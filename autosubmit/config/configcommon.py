@@ -743,6 +743,7 @@ class AutosubmitConfig(object):
         # check if path is file o folder
         # load yaml file with ruamel.yaml
 
+        Log.debug(f"Loading YAML: {yaml_file}")
         new_file = AutosubmitConfig.get_parser(self.parser_factory, yaml_file)
         new_file.data = self.normalize_variables(new_file.data.copy(),
                                                  must_exists=False)  # TODO Figure out why this .copy is needed
