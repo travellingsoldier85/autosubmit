@@ -1552,11 +1552,13 @@ class ParamikoPlatform(Platform):
                 header = header.replace(
                     '%QUEUE_DIRECTIVE%', self.header.get_queue_directive(job, parameters))
             if hasattr(self.header, 'get_processors_directive'):
+                hetsize = job.het['HETSIZE'] if 'HETSIZE' in job.het else -1
                 header = header.replace(
-                    '%NUMPROC_DIRECTIVE%', self.header.get_processors_directive(job, parameters))
+                    '%NUMPROC_DIRECTIVE%', self.header.get_processors_directive(job, hetsize))
             if hasattr(self.header, 'get_partition_directive'):
+                partition = job.het['PARTITION'] if 'PARTITION' in job.het else -1
                 header = header.replace(
-                    '%PARTITION_DIRECTIVE%', self.header.get_partition_directive(job, parameters))
+                    '%PARTITION_DIRECTIVE%', self.header.get_partition_directive(job, partition))
             if hasattr(self.header, 'get_tasks_per_node'):
                 header = header.replace(
                     '%TASKS_PER_NODE_DIRECTIVE%', self.header.get_tasks_per_node(job, parameters))

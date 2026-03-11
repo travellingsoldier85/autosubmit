@@ -56,7 +56,7 @@ class SlurmHeader(object):
         :return: processors directive
         :rtype: str
         """
-        if het > -1 and len(job.het['NODES']) > 0:
+        if het > -1 and 'NODES' in job.het and len(job.het['NODES']) > 0:
             if job.het['NODES'][het] == '':
                 job_nodes = 0
             else:
@@ -65,7 +65,7 @@ class SlurmHeader(object):
                 het] == '1' and int(job_nodes) > 0:
                 return ""
             else:
-                return "SBATCH -n {0}".format(job.het['PROCESSORS'][het])
+                return f"SBATCH -n {job.het['PROCESSORS'][het]}"
         if job.nodes == "":
             job_nodes = 0
         else:
@@ -140,7 +140,7 @@ class SlurmHeader(object):
         :return: nodes directive
         :rtype: str
         """
-        if het > -1 and len(job.het['NODES']) > 0:
+        if het > -1 and 'NODES' in job.het and len(job.het['NODES']) > 0:
             if job.het['NODES'][het] != '' and int(job.het['NODES'][het]) > 1:
                 return f"SBATCH --nodes={job.het['NODES'][het]}"
         else:
@@ -349,36 +349,6 @@ class SlurmHeader(object):
             """)
         return header
 
-    def calculate_wrapper_het_header(self, wr_job) -> str:
-        # TODO is this function actually being used?
-        hetsize = wr_job.het["HETSIZE"]
-        header = self.hetjob_common_header(hetsize, wr_job)
-        for components in range(hetsize):
-            header = header.replace(
-                f'%QUEUE_DIRECTIVE_{components}%', self.get_queue_directive(wr_job, None, hetsize))
-            header = header.replace(
-                f'%PARTITION_DIRECTIVE_{components}%', self.get_partition_directive(wr_job, hetsize))
-            header = header.replace(
-                f'%ACCOUNT_DIRECTIVE_{components}%', self.get_account_directive(wr_job, None, hetsize))
-            header = header.replace(
-                f'%MEMORY_DIRECTIVE_{components}%', self.get_memory_directive(wr_job, None, hetsize))
-            header = header.replace(
-                f'%MEMORY_PER_TASK_DIRECTIVE_{components}%', self.get_memory_per_task_directive(wr_job, None, hetsize))
-            header = header.replace(
-                f'%THREADS_PER_TASK_DIRECTIVE_{components}%', self.get_threads_per_task(wr_job, None, hetsize))
-            header = header.replace(
-                f'%NODES_DIRECTIVE_{components}%', self.get_nodes_directive(wr_job, None, hetsize))
-            header = header.replace(
-                f'%NUMPROC_DIRECTIVE_{components}%', self.get_processors_directive(wr_job, hetsize))
-            header = header.replace(
-                f'%RESERVATION_DIRECTIVE_{components}%', self.get_reservation_directive(wr_job, None, hetsize))
-            header = header.replace(
-                f'%TASKS_PER_NODE_DIRECTIVE_{components}%', self.get_tasks_per_node(wr_job, None, hetsize))
-            header = header.replace(
-                f'%CUSTOM_DIRECTIVES_{components}%', self.get_custom_directives(wr_job, None, hetsize))
-        header = header[:-len("#SBATCH hetjob\n")]  # last element
-
-        return header
 
     def calculate_het_header(self, job: 'Job', parameters: dict):
         header = self.hetjob_common_header(hetsize=job.het["HETSIZE"])
