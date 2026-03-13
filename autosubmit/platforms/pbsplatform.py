@@ -386,7 +386,7 @@ class PBSPlatform(ParamikoPlatform):
             self.scratch, self.project_dir, self.user, self.expid)
         self.remote_log_dir = os.path.join(self.root_dir, "LOG_" + self.expid)
         self.cancel_cmd = "qdel"
-        self._submit_cmd = f'qsub {self.remote_log_dir}/'
+        self._submit_cmd = f' qsub {self.remote_log_dir}/'
         self._submit_command_name = "qsub"
         self._submit_hold_cmd = 'qhold '  # Needs the JOB_ID to hold a JOB
         self.put_cmd = "scp"
@@ -491,9 +491,9 @@ class PBSPlatform(ParamikoPlatform):
                     lang = 'UTF-8'
 
             if not hold:
-                cmd = (export + self._submit_cmd + job_script).encode(lang)
+                cmd = (export + self._submit_cmd + job_script + "\n").encode(lang)
             else:
-                cmd = (export + self._submit_hold_cmd + job_script).encode(lang)
+                cmd = (export + self._submit_hold_cmd + job_script + "\n").encode(lang)
 
             with open(self._submit_script_path, "ab") as submit_script_file:
                 submit_script_file.write(cmd)
