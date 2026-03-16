@@ -3,6 +3,7 @@
 **Bug fixes:**
 
 - Fixed issue with experiments running on LOCAL platform without a defined LOCAL entry in platforms.yml config file #1131
+- Fixed issue overwrittin expid and hpcarch config variables with the ones from the github repo
 
 **Enhancements:**
 
