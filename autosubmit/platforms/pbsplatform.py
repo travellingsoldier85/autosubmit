@@ -245,7 +245,7 @@ class PBSPlatform(ParamikoPlatform):
                             continue
                     package.process_jobs_to_submit(current_package_id, hold)
                     # Check if there are duplicated job_name
-                    if not duplicated_jobs_already_checked:
+                    if not duplicated_jobs_already_checked and len(valid_packages_to_submit) <= 1:
                         job_name = package.name if hasattr(package, "name") else package.jobs[0].name
                         jobs_id = self.get_jobs_id_by_job_name(job_name)
                         if len(jobs_id) > 1:  # Cancel each job that is not the associated
