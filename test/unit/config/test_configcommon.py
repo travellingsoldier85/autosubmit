@@ -349,3 +349,16 @@ def test_platforms_not_dict(
         )
     else:
         assert platform_description == as_conf.platforms_data
+
+
+def test_pin_inmutable_variables(autosubmit_config: "AutosubmitConfigFactory"):
+    """Test that the _pin_inmutable_variables method correctly pins inmutable variables."""
+    as_conf: AutosubmitConfig = autosubmit_config(
+        expid="a000", experiment_data={"DEFAULT": {"HPCARCH": "LOCAL", "EXPID": "a000"}}
+    )
+    inmutable_variables = {"EXPID": "a000", "HPCARCH": "LOCAL"}
+    as_conf.inmutable_variables = inmutable_variables.copy()
+    data = {"EXPID": "a001", "HPCARCH": "MARENOSTRUM5"}
+    pinned_data = as_conf._pin_inmutable_variables(data)
+    assert pinned_data["EXPID"] == "a000"
+    assert pinned_data["HPCARCH"] == "LOCAL"
